@@ -1,16 +1,6 @@
 ---
 # Base task for configuring a Raspi
 
-- name: 'Transfer init scripts'
-  become: yes
-  become_method: sudo
-  copy: src=./ dest=/home/pi/init/ mode=0755
-
-- name: 'Thin out Raspbian'
-  become: yes
-  become_method: sudo
-  shell: /home/pi/init/anti-raspbian-bloat.sh
-
 - apt: update_cache=yes
   name: 'Update apt cache'
   become: yes
@@ -20,35 +10,67 @@
   name: 'Upgrade apt dist'
   become: yes
   become_method: sudo
+  notify:
+    - Restart server
+    - Wait for server to restart
 
-- name: 'Configure locale'
-  become: yes
-  become_method: sudo
-  shell: /home/pi/init/configure-locale.sh
+# - name: 'Install packages'
+#   apt:
+#     pkg={{item}}
+#     state=installed
+#   become: yes
+#   become_method: sudo
+#   with_items:
+#     - tightvncserver
 
-- name: 'Set timezone'
-  become: yes
-  become_method: sudo
-  shell: /home/pi/init/set-timezone.sh
+- name: select default locale
+  debconf:
+    name: locales
+    question: locales/default_environment_locale
+    value: en_US.UTF-8
+    vtype: select
+  notify:
+    - rebuild locales database
 
-- name: 'Set keyboard layout'
-  become: yes
-  become_method: sudo
-  shell: /home/pi/init/set-keyboard-layout.sh
-
-- name: 'Install packages'
-  apt:
-    pkg={{item}}
-    state=installed
-  become: yes
-  become_method: sudo
+- name: /etc/locale.gen
+  lineinfile:
+    dest: /etc/locale.gen
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state }}"
   with_items:
-    - tightvncserver
+    - { regexp: '^#? ?en_US.UTF-8 UTF-8', line: 'en_US.UTF-8 UTF-8', state: present }
+  notify:
+    - rebuild locales database
+    
+- name: set timezone to Europe/Stockholm
+  timezone:
+    name: Europe/Stockholm
+  notify:
+    - Restart crond
 
-- name: 'Reboot'
-  become: yes
-  become_method: sudo
-  command: shutdown -r now "Ansible updates triggered"
-  async: 0
-  poll: 0
-  ignore_errors: true
+- name: Set keyboard layout
+  replace:
+    dest: /etc/default/keyboard
+    regexp: 'gb'
+    replace: 'us'
+  notify:
+    - Reconfigure keyboard
+
+- name: Disallow root SSH access
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify:
+    - Restart ssh
+
+- name: Disallow SSH password authentication
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify:
+    - Restart ssh

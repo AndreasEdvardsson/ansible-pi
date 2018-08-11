@@ -1,0 +1,34 @@
+---
+- name: Restart ssh
+  service: name=ssh state=restarted
+
+- name: Restart crond
+  service: name=crond state=restarted
+  
+- name: rebuild locales database
+  command: "{{ item }}"
+  with_items:
+    - dpkg-reconfigure locales -f noninteractive
+    - /usr/sbin/locale-gen
+
+- name: Reconfigure keyboard
+  command: "{{ item }}"
+  with_items:
+    - dpkg-reconfigure -f noninteractive keyboard-configuration
+    - dpkg-reconfigure -f noninteractive console-setup
+
+- name: Restart server
+  become: true
+  become_method: sudo
+  command: shutdown -r now "Ansible updates triggered"
+  async: 1
+  poll: 0
+  ignore_errors: true
+
+- name: Wait for server to restart
+  local_action:
+    module: wait_for
+      host={{ inventory_hostname }}
+      port=22
+      delay=10
+    become: false
