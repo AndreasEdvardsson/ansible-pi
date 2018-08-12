@@ -1,0 +1,7 @@
+---
+# Install SoapyOsml
+- name: Install SoapyOsmo
+  hosts: all
+  remote_user: pi
+  roles:
+    - raspbian-soapyOsmo

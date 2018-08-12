@@ -1,0 +1,61 @@
+---
+# Install SoapySDR
+
+- name: Update apt cache
+  apt: update_cache=yes
+  become: yes
+
+- name: Install core library and build dependencies
+  apt:
+    pkg={{item}}
+    state=present
+  become: yes
+  with_items:
+    - git
+    - g++
+    - cmake
+    - libpython-dev
+    - python-numpy
+    - swig
+
+- name: Clone SoapySDR git
+  git:
+    repo: 'https://github.com/pothosware/SoapySDR.git'
+    dest: /home/pi/SoapySDR
+    version: soapy-sdr-0.6.1
+  register: gitclone
+
+- name: Remove build dir
+  file: state=absent path=/home/pi/SoapySDR/builddir
+  when: gitclone.changed
+
+- name: Create empty build dir
+  file: state=directory path=/home/pi/SoapySDR/builddir
+  when: gitclone.changed
+
+- name: Generate SoapySDR Makefile
+  command: cmake ..
+  args:
+    chdir: /home/pi/SoapySDR/builddir
+  when: gitclone.changed
+
+- name: Build SoapySDR
+  command: make -j4
+  args:
+    chdir: /home/pi/SoapySDR/builddir
+  when: gitclone.changed
+
+- name: Make install SoapySDR
+  command: make install
+  become: yes
+  args:
+    chdir: /home/pi/SoapySDR/builddir
+  when: gitclone.changed
+
+# For Debian based systems
+- name: Run ldconfid
+  command: ldconfig
+  become: yes
+  args:
+    chdir: /home/pi/SoapySDR/builddir
+  when: gitclone.changed

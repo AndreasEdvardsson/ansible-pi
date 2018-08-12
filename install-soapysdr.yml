@@ -1,0 +1,7 @@
+---
+# Install SoapySDR
+- name: Install SoapySDR
+  hosts: all
+  remote_user: pi
+  roles:
+    - raspbian-soapySDR

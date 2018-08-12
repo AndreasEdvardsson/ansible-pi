@@ -58,9 +58,6 @@
   command: cmake ../
   args:
     chdir: /home/pi/LimeSuite/builddir
-  # command: "{{ item }} chdir=/home/pi/LimeSuite/builddir"
-  # with_items:
-  #   - cmake ..
   when: gitLimeSuiteClone.changed
 
 - name: Build LimeSuite
