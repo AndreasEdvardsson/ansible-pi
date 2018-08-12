@@ -1,0 +1,20 @@
+---
+# Hardenes SSH (Does not add SSH key, lockout possible!)
+
+- name: Disallow root SSH access
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify:
+    - Restart ssh
+
+- name: Disallow SSH password authentication
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify:
+    - Restart ssh

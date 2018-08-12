@@ -1,0 +1,24 @@
+---
+# Base task for keeping the system updated
+
+- apt: update_cache=yes
+  name: 'Update apt cache'
+  become: yes
+  become_method: sudo
+
+- apt: upgrade=dist
+  name: 'Upgrade apt dist'
+  become: yes
+  become_method: sudo
+  notify:
+    - Restart server
+    - Wait for server to restart
+
+# - name: 'Install packages'
+#   apt:
+#     pkg={{item}}
+#     state=installed
+#   become: yes
+#   become_method: sudo
+#   with_items:
+#     - tightvncserver

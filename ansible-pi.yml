@@ -4,4 +4,6 @@
   hosts: all
   remote_user: pi
   roles:
-    - common
+    - apt
+    - raspbian-locale
+    - raspbian-ssh
