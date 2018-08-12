@@ -1,0 +1,94 @@
+---
+# Install LimeSuite and drivers (?)
+
+- name: Update apt cache
+  apt: update_cache=yes
+  become: yes
+  # become_method: sudo
+
+- name: Install core library and build dependencies
+  apt:
+    pkg={{item}}
+    state=present
+  become: yes
+  # become_method: sudo
+  with_items:
+    - git
+    - g++
+    - cmake
+    - libsqlite3-dev
+
+- name: Install hardware support dependencies
+  apt:
+    pkg={{item}}
+    state=present
+  become: yes
+  # become_method: sudo
+  with_items:
+    - libsoapysdr-dev
+    - libi2c-dev
+    - libusb-1.0-0-dev
+
+- name: Install graphics dependencies 
+  apt:
+    pkg={{item}}
+    state=present
+  become: yes
+  # become_method: sudo
+  with_items:
+    - libwxgtk3.0-dev
+    - freeglut3-dev
+
+- name: Clone LimeSuite git
+  git:
+    repo: 'https://github.com/myriadrf/LimeSuite.git'
+    dest: /home/pi/LimeSuite
+    version: v18.06.0
+  register: gitLimeSuiteClone
+
+- name: Remove build dir
+  file: state=absent path=/home/pi/LimeSuite/builddir
+  when: gitLimeSuiteClone.changed
+
+- name: Create empty build dir
+  file: state=directory path=/home/pi/LimeSuite/builddir
+  when: gitLimeSuiteClone.changed
+
+- name: Generate LimeSuite Makefile
+  command: cmake ../
+  args:
+    chdir: /home/pi/LimeSuite/builddir
+  # command: "{{ item }} chdir=/home/pi/LimeSuite/builddir"
+  # with_items:
+  #   - cmake ..
+  when: gitLimeSuiteClone.changed
+
+- name: Build LimeSuite
+  command: make -j4
+  args:
+    chdir: /home/pi/LimeSuite/builddir
+  when: gitLimeSuiteClone.changed
+
+- name: Make install LimeSuite
+  command: make install
+  become: yes
+  args:
+    chdir: /home/pi/LimeSuite/builddir
+  when: gitLimeSuiteClone.changed
+
+- name: Run ldconfid
+  command: ldconfig
+  become: yes
+  args:
+    chdir: /home/pi/LimeSuite/builddir
+  when: gitLimeSuiteClone.changed
+
+- name: Install udev rules
+  command: sh install.sh
+  become: yes
+  args:
+    chdir: /home/pi/LimeSuite/udev-rules
+  when: gitLimeSuiteClone.changed
+  notify:
+    - Restart server
+    - Wait for server to restart
