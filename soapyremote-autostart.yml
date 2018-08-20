@@ -1,0 +1,9 @@
+---
+- hosts: all
+  tasks:
+    - name: enable service SoapySDRServer and ensure it is started
+      become: yes
+      systemd:
+        name: SoapySDRServer
+        state: started
+        enabled: yes

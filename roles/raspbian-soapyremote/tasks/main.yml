@@ -1,0 +1,60 @@
+---
+# Install SoapyRemote
+
+- name: Update apt cache
+  apt: update_cache=yes
+  become: yes
+
+- name: Install core library and build dependencies
+  apt:
+    pkg={{item}}
+    state=present
+  become: yes
+  with_items:
+    - avahi-daemon
+    - libavahi-client-dev
+    - git
+    - g++
+    - cmake
+
+- name: Clone SoapyRemote git
+  git:
+    repo: 'https://github.com/pothosware/SoapyRemote.git'
+    dest: /home/pi/SoapyRemote
+    version: soapy-remote-0.4.3
+  register: gitclone
+
+- name: Remove build dir
+  file: state=absent path=/home/pi/SoapyRemote/builddir
+  when: gitclone.changed
+
+- name: Create empty build dir
+  file: state=directory path=/home/pi/SoapyRemote/builddir
+  when: gitclone.changed
+
+- name: Generate SoapyRemote Makefile
+  command: cmake ..
+  args:
+    chdir: /home/pi/SoapyRemote/builddir
+  when: gitclone.changed
+
+- name: Build SoapyRemote
+  command: make -j4
+  args:
+    chdir: /home/pi/SoapyRemote/builddir
+  when: gitclone.changed
+
+- name: Make install SoapyRemote
+  command: make install
+  become: yes
+  args:
+    chdir: /home/pi/SoapyRemote/builddir
+  when: gitclone.changed
+
+# For Debian based systems
+- name: Run ldconfid
+  command: ldconfig
+  become: yes
+  args:
+    chdir: /home/pi/SoapyRemote/builddir
+  when: gitclone.changed

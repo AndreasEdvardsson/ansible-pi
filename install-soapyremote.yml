@@ -1,0 +1,7 @@
+---
+# Install SoapyRemote
+- name: Install SoapyRemote
+  hosts: all
+  remote_user: pi
+  roles:
+    - raspbian-soapyremote

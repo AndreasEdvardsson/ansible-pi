@@ -1,0 +1,7 @@
+---
+- import_playbook: install-soapysdr.yml
+- import_playbook: install-soapyremote.yml
+- import_playbook: install-limesdr.yml
+- import_playbook: install-sdrplay.yml
+- import_playbook: install-soapyosmo.yml
+- import_playbook: soapyremote-autostart.yml
