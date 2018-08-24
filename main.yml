@@ -1,0 +1,67 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    # common variables
+    # How to generate passwords: https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module
+    # default password: raspbian
+    common_root_password: '$6$5os7eU6kAUfyIlvg$a4xrAywVKF8qB/yksy3HDbyJKDb.BTfCvid3pXaZr773vZuFIdtBRjkYtIzmxxvLbJTtJDE.ZK1iFkuwVgJQ3.'
+    common_deploy_password: '$6$5os7eU6kAUfyIlvg$a4xrAywVKF8qB/yksy3HDbyJKDb.BTfCvid3pXaZr773vZuFIdtBRjkYtIzmxxvLbJTtJDE.ZK1iFkuwVgJQ3.'
+    common_deploy_user_name: pi
+    common_deploy_public_key: https://github.com/AndreasEdvardsson.keys
+    common_ssh_port: 22
+
+    # dev-sec.ssh-hardening
+    # Do not disable sftp
+    sftp_enabled: true
+    ssh_server_ports: "[{{ common_ssh_port }}]"
+  roles:
+    - setup-users
+    - dev-sec.ssh-hardening
+
+- hosts: all
+  # become: yes
+  vars:
+    # common variables
+    common_deploy_user_name: pi
+    common_ssh_port: 22
+
+    # raspbian_ufw
+    raspbian_ufw_allowed_tcp_ports:
+      - "{{ common_ssh_port }}"
+      - 55132
+    raspbian_ufw_allowed_udp_ports: # Allow all UDP ports
+
+    # raspbian-soapysdr
+    raspbian_soapysdr_git_release_version: soapy-sdr-0.6.1
+
+    # raspbian-soapyremote
+    raspbian_soapyremote_git_release_version: soapy-remote-0.4.3
+
+    # raspbian-limesuite
+    raspbian_limesuite_git_release_version: v18.06.0
+
+    # raspbian-soapysdrplay
+    raspbian_soapysdrplay_git_release_version: HEAD
+    raspbian_soapysdrplay_driver_name: SDRplay_RSP_API-RPi-2.13.1.run
+  roles:
+    - raspbian-upgrade-packages
+    - raspbian-unattended-upgrades
+    - raspbian-ufw
+    - raspbian-soapysdr
+    - raspbian-soapyremote
+    - raspbian-limesuite
+    - raspbian-soapysdrplay
+  post_tasks:
+    - name: Install fail2ban
+      become: yes
+      apt:
+        name: fail2ban
+        state: present
+
+    - name: Restart and enable SoapySDRServer
+      become: yes
+      systemd:
+        name: SoapySDRServer
+        state: restarted
+        enabled: yes

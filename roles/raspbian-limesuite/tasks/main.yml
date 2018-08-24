@@ -1,0 +1,94 @@
+---
+# Install LimeSuite and drivers
+- name: Install libraries and build dependencies
+  become: yes
+  apt:
+    name: "{{ packages }}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+      - git
+      - g++
+      - cmake
+      - libsqlite3-dev
+      - libsoapysdr-dev
+      - libi2c-dev
+      - libusb-1.0-0-dev
+      - libwxgtk3.0-dev
+      - freeglut3-dev
+
+- name: Clone git
+  git:
+    repo: "https://github.com/myriadrf/LimeSuite.git"
+    dest: "{{ raspbian_limesuite_directory }}"
+    version: "{{ raspbian_limesuite_git_release_version }}"
+  register: gitclone
+
+- name: Remove build dir
+  file:
+    state: absent
+    path: "{{ raspbian_limesuite_builddir }}"
+  when: gitclone.changed
+
+- name: Create empty build dir
+  file:
+    state: directory
+    path: "{{ raspbian_limesuite_builddir }}"
+  when: gitclone.changed
+
+- name: Generate Limesuite Makefile
+  command: cmake ..
+  args:
+    chdir: "{{ raspbian_limesuite_builddir }}"
+  when: gitclone.changed
+
+- name: Build Limesuite
+  command: make -j4
+  args:
+    chdir: "{{ raspbian_limesuite_builddir }}"
+  when: gitclone.changed
+
+- name: Make install
+  command: make install
+  become: yes
+  args:
+    chdir: "{{ raspbian_limesuite_builddir }}"
+  when: gitclone.changed
+
+# For Debian based systems
+- name: Run ldconfid
+  command: ldconfig
+  become: yes
+  args:
+    chdir: "{{ raspbian_limesuite_builddir }}"
+  when: gitclone.changed
+
+- name: Install udev rules
+  command: sh install.sh
+  become: yes
+  args:
+    chdir: "{{ raspbian_limesuite_directory }}/udev-rules"
+  when: gitclone.changed
+  # notify:
+  #   - Restart server
+  #   - Wait for server to restart
+
+- name: restart server if upgraded
+  shell: sleep 2 && shutdown -r now "Ansible LimeSuite udev rules installed, restarting"
+  async: 1
+  poll: 0
+  become: yes
+  ignore_errors: true
+  when: gitclone.changed
+
+- name: waiting for server to come back after reboot
+  wait_for_connection:
+    host: "{{ inventory_hostname }}"
+    state: started
+    port: "{{ common_ssh_port }}"
+    delay: 30
+    timeout: 300
+    connect_timeout: 15
+  when: gitclone.changed
+

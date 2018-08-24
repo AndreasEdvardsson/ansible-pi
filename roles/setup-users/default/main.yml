@@ -1,0 +1,5 @@
+---
+common_root_password: 'xxx'
+common_deploy_password: 'xxx'
+common_deploy_user_name: user
+common_deploy_public_key: lookup('file', '~/.ssh/id_rsa.pub')

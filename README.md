@@ -23,5 +23,10 @@ network={
 On first boot:
 raspi-config
 
+Modify any settings in main.yml first
+
 Run it:
-$ ansible-playbook -s -i hosts ansible-pi.yml
+$ ansible-playbook -i hosts main.yml --ask-pass
+
+When it fails:
+$ ansible-playbook -i hosts main.yml

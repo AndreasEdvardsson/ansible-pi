@@ -1,54 +1,56 @@
 ---
 # Install SoapyRemote
 
-- name: Update apt cache
-  apt: update_cache=yes
+- name: Install libraries and build dependencies
   become: yes
-
-- name: Install core library and build dependencies
   apt:
-    pkg={{item}}
-    state=present
-  become: yes
-  with_items:
-    - avahi-daemon
-    - libavahi-client-dev
-    - git
-    - g++
-    - cmake
+    name: "{{ packages }}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+      - avahi-daemon
+      - libavahi-client-dev
+      - git
+      - g++
+      - cmake
 
-- name: Clone SoapyRemote git
+- name: Clone git
   git:
-    repo: 'https://github.com/pothosware/SoapyRemote.git'
-    dest: /home/pi/SoapyRemote
-    version: soapy-remote-0.4.3
+    repo: "https://github.com/pothosware/SoapyRemote.git"
+    dest: "{{ raspbian_soapyremote_directory }}"
+    version: "{{ raspbian_soapyremote_git_release_version }}"
   register: gitclone
 
 - name: Remove build dir
-  file: state=absent path=/home/pi/SoapyRemote/builddir
+  file:
+    state: absent
+    path: "{{ raspbian_soapyremote_builddir }}"
   when: gitclone.changed
 
 - name: Create empty build dir
-  file: state=directory path=/home/pi/SoapyRemote/builddir
+  file:
+    state: directory
+    path: "{{ raspbian_soapyremote_builddir }}"
   when: gitclone.changed
 
-- name: Generate SoapyRemote Makefile
+- name: Generate Soapyremote Makefile
   command: cmake ..
   args:
-    chdir: /home/pi/SoapyRemote/builddir
+    chdir: "{{ raspbian_soapyremote_builddir }}"
   when: gitclone.changed
 
-- name: Build SoapyRemote
+- name: Build Soapyremote
   command: make -j4
   args:
-    chdir: /home/pi/SoapyRemote/builddir
+    chdir: "{{ raspbian_soapyremote_builddir }}"
   when: gitclone.changed
 
-- name: Make install SoapyRemote
+- name: Make install
   command: make install
   become: yes
   args:
-    chdir: /home/pi/SoapyRemote/builddir
+    chdir: "{{ raspbian_soapyremote_builddir }}"
   when: gitclone.changed
 
 # For Debian based systems
@@ -56,5 +58,5 @@
   command: ldconfig
   become: yes
   args:
-    chdir: /home/pi/SoapyRemote/builddir
+    chdir: "{{ raspbian_soapyremote_builddir }}"
   when: gitclone.changed

@@ -1,0 +1,39 @@
+---
+- name: Install required packages
+  become: yes
+  apt:
+    update_cache: yes
+    state: present
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - ufw
+
+- name: reset and disable ufw
+  become: yes
+  ufw:
+    state: reset
+
+- name: Allow connections on certain tcp ports
+  become: yes
+  ufw:
+    rule: allow
+    proto: tcp
+    port: "{{ item }}"
+  with_items:
+    - "{{ raspbian_ufw_allowed_tcp_ports }}"
+
+- name: Allow connections on certain udp ports
+  become: yes
+  ufw:
+    rule: allow
+    proto: udp
+    port: "{{ item }}"
+  with_items:
+    - "{{ raspbian_ufw_allowed_udp_ports }}"
+
+- name: Enable ufw and deny everything not explicitly allowed
+  become: yes
+  ufw:
+    state: enabled
+    policy: deny

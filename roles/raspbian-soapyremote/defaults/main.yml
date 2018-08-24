@@ -1,0 +1,4 @@
+---
+raspbian_soapyremote_directory: "/home/{{ common_deploy_user_name }}/SoapyRemote"
+raspbian_soapyremote_builddir: "{{ raspbian_soapyremote_directory }}/builddir"
+raspbian_soapyremote_git_release_version: soapy-remote-0.4.3

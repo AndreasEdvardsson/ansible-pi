@@ -1,0 +1,4 @@
+---
+raspbian_limesuite_directory: "/home/{{ common_deploy_user_name }}/LimeSuite"
+raspbian_limesuite_builddir: "{{ raspbian_limesuite_directory }}/builddir"
+raspbian_limesuite_git_release_version: v18.06.0

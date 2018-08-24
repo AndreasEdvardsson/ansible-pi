@@ -1,0 +1,4 @@
+---
+raspbian_soapysdr_directory: "/home/{{ common_deploy_user_name }}/SoapySDR"
+raspbian_soapysdr_builddir: "{{ raspbian_soapysdr_directory }}/builddir"
+raspbian_soapysdr_git_release_version: soapy-sdr-0.6.1

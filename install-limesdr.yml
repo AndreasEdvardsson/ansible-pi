@@ -1,7 +1,0 @@
----
-# Install lime sdr
-- name: Install lime sdr
-  hosts: all
-  remote_user: pi
-  roles:
-    - raspbian-limesdr

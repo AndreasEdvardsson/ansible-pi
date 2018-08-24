@@ -1,7 +1,0 @@
----
-# Install SDRPlay
-- name: Install SoapySDRPlay
-  hosts: all
-  remote_user: pi
-  roles:
-    - raspbian-sdrplay
